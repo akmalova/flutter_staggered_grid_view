@@ -37,6 +37,7 @@ class ReorderableStaggeredLayout extends StatefulWidget {
     this.crossAxisSpacing = 0.0,
     this.feedBackWidgetBuilder,
     this.feedBackBorderRadius,
+    this.onReorderStart,
   }) : super(key: key);
 
   /// A non-reorderable header widget to show before the list.
@@ -80,6 +81,9 @@ class ReorderableStaggeredLayout extends StatefulWidget {
   /// Feedback widget border radius
   final BorderRadius? feedBackBorderRadius;
 
+  /// Called when reorder start
+  final void Function(int index)? onReorderStart;
+
   @override
   _ReorderableStaggeredLayoutState createState() => _ReorderableStaggeredLayoutState();
 }
@@ -108,6 +112,7 @@ class _ReorderableStaggeredLayoutState extends State<ReorderableStaggeredLayout>
       crossAxisSpacing: widget.crossAxisSpacing,
       feedBackWidgetBuilder: widget.feedBackWidgetBuilder,
       feedBackBorderRadius: widget.feedBackBorderRadius,
+      onReorderStart: widget.onReorderStart,
     );
   }
 }
@@ -127,6 +132,7 @@ class _ReorderableListContent extends StatefulWidget {
     required this.crossAxisSpacing,
     required this.feedBackWidgetBuilder,
     required this.feedBackBorderRadius,
+    required this.onReorderStart,
   });
 
   final Widget? header;
@@ -140,6 +146,7 @@ class _ReorderableListContent extends StatefulWidget {
   final double crossAxisSpacing;
   final IndexedFeedBackWidgetBuilder? feedBackWidgetBuilder;
   final BorderRadius? feedBackBorderRadius;
+  final void Function(int index)? onReorderStart;
 
   @override
   _ReorderableListContentState createState() => _ReorderableListContentState();
@@ -257,6 +264,7 @@ class _ReorderableListContentState extends State<_ReorderableListContent>
 
     // Starts dragging toWrap.
     void onDragStarted() {
+      widget.onReorderStart?.call(index);
       setState(() {
         _dragging = toWrap;
         _dragStartIndex = index;
@@ -467,7 +475,9 @@ class _ReorderableListContentState extends State<_ReorderableListContent>
       if (_dragging != null) {
         if (index == _ghostIndex) {
           return const SizedBox.shrink();
-        } else if (index < _ghostIndex && _dragStartIndex < _ghostIndex) {
+        } else if (_dragStartIndex < _ghostIndex &&
+            index >= _dragStartIndex &&
+            index < _ghostIndex) {
           return widget.children[index + 1];
         } else if (index > _ghostIndex &&
             index <= _dragStartIndex &&
